@@ -50,20 +50,62 @@
             bottom: 100%;
             animation: scanline 8s linear infinite;
         }
+
+        /* Botão de áudio */
+        .audio-control {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 50;
+            background: rgba(255, 0, 85, 0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 0, 85, 0.3);
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .audio-control:hover {
+            background: rgba(255, 0, 85, 0.3);
+            transform: scale(1.1) rotate(5deg);
+            border-color: rgba(255, 0, 85, 0.6);
+        }
+
+        .audio-control:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body class="bg-pattern min-h-screen flex flex-col justify-center items-center p-6 relative">
     <div class="scanline"></div>
 
-    <!-- Header / Title -->
+    <!-- Áudio com Link Direto do Drive -->
+    <audio id="bgMusic" loop preload="auto">
+        <source src="https://docs.google.com/uc?export=download&id=1VUzwDF50SQiF62-joYVwjl_bCu999-Wt" type="audio/mpeg">
+    </audio>
+
+    <!-- Botão de Volume -->
+    <button id="audioToggle" class="audio-control" title="Ativar/Desativar Som">
+        <svg id="icon-speaker" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-pink-600">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+            <path id="volume-waves" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" style="display:none"></path>
+            <line id="mute-line" x1="23" y1="1" x2="1" y2="23" style="display:inline"></line>
+        </svg>
+    </button>
+
+    <!-- Header -->
     <header class="text-center mb-12 relative z-20">
         <h2 class="jp-font text-pink-600 text-sm tracking-[0.3em] font-bold mb-2">フォルツァ モータースポーツ 6</h2>
         <h1 class="text-5xl md:text-7xl font-black tracking-tighter italic">FORZA <span class="text-pink-600">6</span></h1>
         <p class="text-gray-400 mt-4 uppercase tracking-widest text-xs">Lançamento Mundial • 19 de Maio de 2026</p>
     </header>
 
-    <!-- Main Countdown -->
-    <main class="w-full max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-4 z-20">
+    <!-- Contador -->
+    <main id="countdown-container" class="w-full max-w-4xl grid grid-cols-2 md:grid-cols-4 gap-4 z-20">
         <div class="card-blur rounded-xl p-8 flex flex-col items-center justify-center transition-all hover:border-pink-600/50">
             <span id="days" class="text-5xl md:text-6xl font-bold mb-1">00</span>
             <span class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Dias</span>
@@ -86,17 +128,17 @@
         </div>
     </main>
 
-    <!-- Details / Footer -->
+    <!-- Rodapé -->
     <footer class="mt-16 text-center z-20">
         <div class="flex items-center justify-center gap-4 mb-4 opacity-50">
             <div class="h-[1px] w-12 bg-gray-500"></div>
             <span class="jp-font text-xs tracking-widest">速度と情熱</span>
             <div class="h-[1px] w-12 bg-gray-500"></div>
         </div>
-        <p class="text-[10px] text-gray-600 uppercase tracking-widest">Aguardando a próxima geração da simulação.</p>
+        <p class="text-[10px] text-gray-600 uppercase tracking-widest">Toque em qualquer lugar para carregar a experiência.</p>
     </footer>
 
-    <!-- Japanese Accents (Floating Kanji) -->
+    <!-- Elementos Flutuantes -->
     <div class="fixed bottom-10 left-10 opacity-10 pointer-events-none hidden lg:block">
         <h3 class="jp-font text-8xl font-black">レース</h3>
     </div>
@@ -105,7 +147,41 @@
     </div>
 
     <script>
-        // Data do lançamento do Forza 6
+        const audio = document.getElementById('bgMusic');
+        const audioBtn = document.getElementById('audioToggle');
+        const waves = document.getElementById('volume-waves');
+        const muteLine = document.getElementById('mute-line');
+        let isPlaying = false;
+
+        // Função para alternar áudio
+        function toggleAudio() {
+            if (isPlaying) {
+                audio.pause();
+                waves.style.display = 'none';
+                muteLine.style.display = 'inline';
+            } else {
+                audio.play().catch(err => {
+                    console.log("Aguardando interação do usuário para tocar áudio.");
+                });
+                waves.style.display = 'inline';
+                muteLine.style.display = 'none';
+            }
+            isPlaying = !isPlaying;
+        }
+
+        audioBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Evita conflito com o clique no body
+            toggleAudio();
+        });
+
+        // Toca automaticamente no primeiro clique do usuário em qualquer lugar da página (exigência dos browsers)
+        document.body.addEventListener('click', () => {
+            if (!isPlaying) {
+                toggleAudio();
+            }
+        }, { once: true });
+
+        // Lógica do Contador
         const targetDate = new Date("May 19, 2026 00:00:00").getTime();
 
         function updateCountdown() {
@@ -113,7 +189,7 @@
             const distance = targetDate - now;
 
             if (distance < 0) {
-                document.querySelector("main").innerHTML = `
+                document.getElementById("countdown-container").innerHTML = `
                     <div class="col-span-full card-blur rounded-xl p-12 text-center">
                         <h2 class="text-4xl font-bold text-pink-600 neon-text italic mb-2">DISPONÍVEL AGORA</h2>
                         <p class="jp-font text-gray-400 uppercase tracking-widest">Vá para a pista!</p>
@@ -122,18 +198,17 @@
                 return;
             }
 
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            const d = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((distance % (1000 * 60)) / 1000);
 
-            document.getElementById("days").innerText = days.toString().padStart(2, '0');
-            document.getElementById("hours").innerText = hours.toString().padStart(2, '0');
-            document.getElementById("minutes").innerText = minutes.toString().padStart(2, '0');
-            document.getElementById("seconds").innerText = seconds.toString().padStart(2, '0');
+            document.getElementById("days").innerText = d.toString().padStart(2, '0');
+            document.getElementById("hours").innerText = h.toString().padStart(2, '0');
+            document.getElementById("minutes").innerText = m.toString().padStart(2, '0');
+            document.getElementById("seconds").innerText = s.toString().padStart(2, '0');
         }
 
-        // Atualiza a cada segundo
         setInterval(updateCountdown, 1000);
         updateCountdown();
     </script>
